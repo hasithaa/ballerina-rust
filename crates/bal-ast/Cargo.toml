@@ -1,0 +1,8 @@
+[package]
+name = "bal-ast"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+bal-syntax = { path = "../bal-syntax" }
+rowan.workspace = true 

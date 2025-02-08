@@ -1,0 +1,10 @@
+[package]
+name = "bal-lsp"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+bal-parser = { path = "../bal-parser" }
+bal-ast = { path = "../bal-ast" }
+tower-lsp.workspace = true
+tokio.workspace = true 

@@ -1,0 +1,10 @@
+[package]
+name = "bal-cli"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+bal-parser = { path = "../bal-parser" }
+bal-ast = { path = "../bal-ast" }
+bal-codegen = { path = "../bal-codegen" }
+clap.workspace = true 

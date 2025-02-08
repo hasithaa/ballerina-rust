@@ -1,0 +1,12 @@
+[package]
+name = "bal-wasm"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bal-parser = { path = "../bal-parser" }
+bal-ast = { path = "../bal-ast" }
+wasm-bindgen.workspace = true 
