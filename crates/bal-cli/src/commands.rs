@@ -4,7 +4,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use bal_parser::Parser;
 use bal_syntax::lexer::Lexer;
-use bal_syntax::SyntaxKind;
 use bal_syntax::project::Project;
 
 
@@ -98,14 +97,13 @@ fn parse_and_build_file(path: &Path) -> Result<(), String> {
         match result {
             Ok(token_info) => {
                 if !matches!(token_info.kind, bal_syntax::lexer::Token::Newline) {
-                    let kind = convert_token(token_info.kind);
+                    let kind = bal_syntax::convert_token(token_info.kind);
                     tokens.push((kind, token_info.text, token_info.span));
                 }
             }
             Err(e) => {
                 eprintln!("Lexer error: {}", e);
                 had_errors = true;
-                // Continue lexing despite error
             }
         }
     }
@@ -130,24 +128,5 @@ fn parse_and_build_file(path: &Path) -> Result<(), String> {
     }
 }
 
-fn convert_token(token: bal_syntax::lexer::Token) -> SyntaxKind {
-    match token {
-        bal_syntax::lexer::Token::Import => SyntaxKind::IMPORT_KW,
-        bal_syntax::lexer::Token::Public => SyntaxKind::PUBLIC_KW,
-        bal_syntax::lexer::Token::Function => SyntaxKind::FUNCTION_KW,
-        bal_syntax::lexer::Token::Returns => SyntaxKind::RETURNS_KW,
-        bal_syntax::lexer::Token::Int => SyntaxKind::INT_KW,
-        bal_syntax::lexer::Token::Boolean => SyntaxKind::BOOLEAN_KW,
-        bal_syntax::lexer::Token::Identifier => SyntaxKind::IDENTIFIER,
-        bal_syntax::lexer::Token::LParen => SyntaxKind::L_PAREN,
-        bal_syntax::lexer::Token::RParen => SyntaxKind::R_PAREN,
-        bal_syntax::lexer::Token::LBrace => SyntaxKind::L_BRACE,
-        bal_syntax::lexer::Token::RBrace => SyntaxKind::R_BRACE,
-        bal_syntax::lexer::Token::Comma => SyntaxKind::COMMA,
-        bal_syntax::lexer::Token::Semicolon => SyntaxKind::SEMICOLON,
-        bal_syntax::lexer::Token::Slash => SyntaxKind::SLASH,
-        bal_syntax::lexer::Token::LineComment => SyntaxKind::COMMENT,
-        bal_syntax::lexer::Token::Newline => SyntaxKind::WHITESPACE,
-        _ => SyntaxKind::ERROR,
-    }
-} 
+#[cfg(test)]
+mod tests; 

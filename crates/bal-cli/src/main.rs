@@ -37,4 +37,4 @@ fn main() {
 }
 
 mod commands;
-mod config; 
+mod config;
