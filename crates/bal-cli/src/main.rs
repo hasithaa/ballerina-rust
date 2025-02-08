@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use crate::config::Config;
 
 #[derive(Parser)]
 #[command(name = "ballerina-rust")]
@@ -9,6 +10,10 @@ use std::path::PathBuf;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    /// Enable debug output
+    #[arg(short, long, global = true)]
+    debug: bool,
 }
 
 #[derive(Subcommand)]
@@ -19,14 +24,24 @@ enum Commands {
         /// If not provided, attempts to build project in current directory
         input: Option<PathBuf>,
     },
+    /// Clean the target directory of a Ballerina project
+    Clean {
+        /// Optional path to project directory.
+        /// If not provided, attempts to clean project in current directory
+        path: Option<PathBuf>,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
+    let config = Config::new(cli.debug);
 
     let result = match cli.command {
         Commands::Build { input } => {
-            commands::build(input)
+            commands::build(input, &config)
+        }
+        Commands::Clean { path } => {
+            commands::clean(path, &config)
         }
     };
 
@@ -38,3 +53,4 @@ fn main() {
 
 mod commands;
 mod config;
+mod dependency;
