@@ -1,11 +1,17 @@
 //! Lexer implementation for Ballerina
 
 use logos::Logos;
-use crate::SyntaxKind;
+use std::ops::Range;
 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct TokenInfo {
+    pub kind: Token,
+    pub span: Range<usize>,
+    pub text: String,
+}
+
+#[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(skip r"[ \t\n\f]+")]  // Ignore whitespace
-#[logos(skip r"//[^\n]*")]    // Skip single-line comments
 pub enum Token {
     // Keywords
     #[token("import")]
@@ -115,20 +121,34 @@ pub enum Token {
     
     #[regex("0|[1-9][0-9]*")]
     IntegerLiteral,
+
+    // Comments
+    #[regex("//[^\n]*")]
+    LineComment,
 }
 
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, Token>,
+    source: &'a str,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
             inner: Token::lexer(input),
+            source: input,
         }
     }
 
-    pub fn next_token(&mut self) -> Option<Result<Token, ()>> {
-        self.inner.next()
+    pub fn next_token(&mut self) -> Option<TokenInfo> {
+        self.inner.next().map(|token| {
+            let span = self.inner.span();
+            let text = self.source[span.clone()].to_string();
+            TokenInfo {
+                kind: token.unwrap(),
+                span,
+                text,
+            }
+        })
     }
 } 

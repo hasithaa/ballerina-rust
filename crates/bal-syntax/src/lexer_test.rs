@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::{Lexer, Token};
+    use crate::lexer::{Lexer, Token, TokenInfo};
 
-    fn tokenize(input: &str) -> Vec<Token> {
+    fn tokenize(input: &str) -> Vec<TokenInfo> {
         let mut lexer = Lexer::new(input);
         let mut tokens = Vec::new();
         while let Some(token) = lexer.next_token() {
-            tokens.push(token.unwrap());
+            tokens.push(token);
         }
         tokens
     }
@@ -15,7 +15,9 @@ mod tests {
     #[test]
     fn test_keywords() {
         let input = "import public function returns int boolean if else while break continue return true false";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::Import,
             Token::Public,
@@ -37,7 +39,9 @@ mod tests {
     #[test]
     fn test_operators() {
         let input = "== != < <= > >= + - * / % =";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::Eq,
             Token::NotEq,
@@ -57,7 +61,9 @@ mod tests {
     #[test]
     fn test_delimiters() {
         let input = "( ) { } , : ;";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::LParen,
             Token::RParen,
@@ -72,7 +78,9 @@ mod tests {
     #[test]
     fn test_identifiers() {
         let input = "foo bar123 baz_qux";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::Identifier,
             Token::Identifier,
@@ -83,7 +91,9 @@ mod tests {
     #[test]
     fn test_integer_literals() {
         let input = "0 42 123456789";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::IntegerLiteral,
             Token::IntegerLiteral,
@@ -93,11 +103,26 @@ mod tests {
 
     #[test]
     fn test_comments() {
-        let input = "foo // this is a comment bar";
-        let tokens = tokenize(input);
+        let input = "foo // this is a comment\nbar baz";
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
-            Token::Identifier
+            Token::Identifier,
+            Token::LineComment,
+            Token::Identifier,
+            Token::Identifier,
         ]);
+    }
+
+    #[test]
+    fn test_comment_spans() {
+        let input = "foo // comment";
+        let token = tokenize(input).into_iter()
+            .find(|t| matches!(t.kind, Token::LineComment))
+            .unwrap();
+        assert_eq!(token.text, "// comment");
+        assert_eq!(token.span, 4..14);
     }
 
     #[test]
@@ -107,7 +132,9 @@ mod tests {
                 return a + b;
             }
         "#;
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::Public,
             Token::Function,
@@ -134,7 +161,9 @@ mod tests {
     #[test]
     fn test_import_statement() {
         let input = "import foo/bar;";
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::Import,
             Token::Identifier,
@@ -153,7 +182,9 @@ mod tests {
                 return false;
             }
         "#;
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::If,
             Token::LParen,
@@ -185,7 +216,9 @@ mod tests {
                 }
             }
         "#;
-        let tokens = tokenize(input);
+        let tokens: Vec<_> = tokenize(input).into_iter()
+            .map(|t| t.kind)
+            .collect();
         assert_eq!(tokens, vec![
             Token::While,
             Token::LParen,
