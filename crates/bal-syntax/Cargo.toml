@@ -5,4 +5,7 @@ edition.workspace = true
 
 [dependencies]
 rowan.workspace = true
-logos.workspace = true 
+logos.workspace = true
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+thiserror = "1.0" 

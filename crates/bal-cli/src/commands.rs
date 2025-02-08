@@ -1,21 +1,82 @@
 //! CLI command implementations
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use bal_parser::Parser;
 use bal_syntax::lexer::Lexer;
 use bal_syntax::SyntaxKind;
+use bal_syntax::project::Project;
 
 
-pub fn build(input: &str) -> Result<(), String> {
-    let path = Path::new(input);
+fn is_bal_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map_or(false, |ext| ext == "bal")
+}
+
+pub fn build(input: Option<PathBuf>) -> Result<(), String> {
+    match input {
+        Some(path) => {
+            if path.is_dir() {
+                build_project_from_path(&path)
+            } else {
+                build_single_file(&path)
+            }
+        }
+        None => build_project_from_path(&std::env::current_dir()
+            .map_err(|e| format!("Failed to get current directory: {}", e))?)
+    }
+}
+
+fn build_single_file(path: &Path) -> Result<(), String> {
+    // Validate file exists
     if !path.exists() {
-        return Err(format!("File not found: {}", input));
-    }
-    if path.extension().and_then(|ext| ext.to_str()) != Some("bal") {
-        return Err(format!("Not a Ballerina file: {}", input));
+        return Err(format!("File not found: {}", path.display()));
     }
 
+    // Validate file extension before checking project
+    if !is_bal_file(path) {
+        return Err(format!("Not a Ballerina file: {}", path.display()));
+    }
+
+    // Check all parent directories for Ballerina.toml
+    let mut current_dir = path.parent();
+    while let Some(dir) = current_dir {
+        if let Some(toml_path) = bal_syntax::project::find_ballerina_toml(dir) {
+            return Err(format!(
+                "File {} is in a Ballerina project directory (found {} in {}). Use 'bal build' in the project directory.",
+                path.display(),
+                toml_path.file_name().unwrap_or_default().to_string_lossy(),
+                dir.display()
+            ));
+        }
+        current_dir = dir.parent();
+    }
+
+    parse_and_build_file(path)
+}
+
+fn build_project_from_path(project_path: &Path) -> Result<(), String> {
+    // Load and validate project
+    let project = Project::load(project_path)
+        .map_err(|e| format!("Failed to load project: {}", e))?;
+
+    println!("Building Ballerina project: {}/{} v{}", 
+        project.package.info.org,
+        project.package.info.name, 
+        project.package.info.version);
+    println!("Project directory: {}", project.root_dir.display());
+
+    // Build all source files
+    for file in &project.source_files {
+        println!("\nBuilding file: {}", file.display());
+        parse_and_build_file(file)?;
+    }
+
+    Ok(())
+}
+
+fn parse_and_build_file(path: &Path) -> Result<(), String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
@@ -26,10 +87,8 @@ pub fn build(input: &str) -> Result<(), String> {
     
     while let Some(result) = lexer.next_token() {
         if let Ok(token_info) = result {
-            // Skip only whitespace and newlines
             if !matches!(token_info.kind, bal_syntax::lexer::Token::Newline) {
                 let kind = convert_token(token_info.kind);
-                // Store token with its span information
                 tokens.push((kind, token_info.text, token_info.span));
             }
         }
@@ -43,7 +102,7 @@ pub fn build(input: &str) -> Result<(), String> {
     let parser = Parser::new(file_name, tokens);
     match parser.parse() {
         Ok(parse_tree) => {
-            println!("Successfully parsed: {}", input);
+            println!("Successfully parsed: {}", path.display());
             println!("Parse tree:\n{:#?}", parse_tree);
             Ok(())
         }

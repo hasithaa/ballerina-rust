@@ -227,6 +227,7 @@ impl Parser {
                 end: self.tokens.len(),
                 line: self.tokens.last().map(|(_, _, s)| s.line).unwrap_or(1),
                 column: self.tokens.last().map(|(_, _, s)| s.column + 1).unwrap_or(0),
+                line_content: None,
             }
         }
     }

@@ -171,6 +171,7 @@ impl<'a> Lexer<'a> {
                     end: range.end,
                     line,
                     column,
+                    line_content: None,
                 },
             })
         })

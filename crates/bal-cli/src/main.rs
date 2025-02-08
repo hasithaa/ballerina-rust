@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "ballerina-rust")]
@@ -12,10 +13,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Build a Ballerina file
+    /// Build a Ballerina project or file
     Build {
-        /// Input .bal file
-        input: String,
+        /// Optional path to a .bal file or project directory. 
+        /// If not provided, attempts to build project in current directory
+        input: Option<PathBuf>,
     },
 }
 
@@ -24,7 +26,7 @@ fn main() {
 
     let result = match cli.command {
         Commands::Build { input } => {
-            commands::build(&input)
+            commands::build(input)
         }
     };
 
