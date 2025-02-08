@@ -1,12 +1,12 @@
 ---
 source: crates/bal-parser/src/parser_test.rs
-assertion_line: 71
+assertion_line: 74
 expression: parse(input)
 ---
 Ok(
     GreenNode {
         kind: SyntaxKind(
-            38,
+            39,
         ),
         text_len: 37,
         n_children: 1,

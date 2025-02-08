@@ -18,6 +18,7 @@ Err(
             end: 14,
             line: 1,
             column: 13,
+            line_content: None,
         },
     },
 )

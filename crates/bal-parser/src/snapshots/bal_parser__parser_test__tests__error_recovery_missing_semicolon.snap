@@ -15,6 +15,7 @@ Err(
             end: 4,
             line: 1,
             column: 12,
+            line_content: None,
         },
     },
 )
