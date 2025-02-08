@@ -12,7 +12,7 @@ impl Parser {
     }
 
     pub(crate) fn parse_parameter_list(&mut self) {
-        self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::PARAMETER_LIST));
+        self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::PARAM_LIST));
         // Parse parameters
         self.builder.finish_node();
     }

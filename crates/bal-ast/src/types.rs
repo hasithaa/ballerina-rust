@@ -6,6 +6,6 @@ pub enum Type {
     Float,
     String,
     Boolean,
-    Void,
+    NIL,
     // Add more types as needed
 } 
