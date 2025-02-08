@@ -114,9 +114,34 @@ impl Parser {
 
     fn parse_stmt_block(&mut self) -> Result<(), ParserError> {
         self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::STMT_BLOCK));
+        
         self.expect(SyntaxKind::L_BRACE)?;
-        // TODO: Parse statements here
+        
+        while !self.at(SyntaxKind::R_BRACE) && !self.at_end() {
+            match self.parse_statement() {
+                Ok(_) => {},
+                Err(e) => {
+                    // Report error but continue parsing
+                    eprintln!("Error in statement: {}", e);
+                    self.synchronize();
+                }
+            }
+        }
+        
         self.expect(SyntaxKind::R_BRACE)?;
+        self.builder.finish_node();
+        Ok(())
+    }
+
+    fn parse_statement(&mut self) -> Result<(), ParserError> {
+        self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::STATEMENT));
+        
+        // For now, just expect a semicolon-terminated statement
+        while !self.at(SyntaxKind::SEMICOLON) && !self.at_end() {
+            self.bump()?;
+        }
+        self.expect(SyntaxKind::SEMICOLON)?;
+        
         self.builder.finish_node();
         Ok(())
     }
@@ -182,11 +207,20 @@ impl Parser {
             self.bump()?;
             Ok(())
         } else {
-            Err(ParserError::UnexpectedToken {
+            let err = ParserError::UnexpectedToken {
                 expected: vec![format!("{:?}", kind)],
                 found: format!("{:?}", self.peek_kind().unwrap_or(SyntaxKind::EOF)),
                 span: self.current_span(),
-            })
+            };
+            
+            // Mark error in syntax tree
+            self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::ERROR));
+            self.builder.finish_node();
+            
+            // Recover at next statement
+            self.synchronize();
+            
+            Err(err)
         }
     }
 
@@ -196,11 +230,18 @@ impl Parser {
                 self.bump()?;
                 Ok(())
             } else {
-                Err(ParserError::UnexpectedToken {
+                let err = ParserError::UnexpectedToken {
                     expected: kinds.iter().map(|&k| format!("{:?}", k)).collect(),
                     found: format!("{:?}", current),
                     span: self.current_span(),
-                })
+                };
+                
+                self.builder.start_node(BallerinaLanguage::kind_to_raw(SyntaxKind::ERROR));
+                self.builder.finish_node();
+                
+                self.recover_until(&[SyntaxKind::SEMICOLON, SyntaxKind::R_BRACE]);
+                
+                Err(err)
             }
         } else {
             Err(ParserError::UnexpectedToken {
@@ -234,5 +275,58 @@ impl Parser {
 
     fn at_function_start(&self) -> bool {
         self.at(SyntaxKind::FUNCTION_KW) || self.at(SyntaxKind::PUBLIC_KW)
+    }
+
+    // Add this helper method for error recovery
+    fn recover_until(&mut self, sync_tokens: &[SyntaxKind]) {
+        while let Some(kind) = self.peek_kind() {
+            if sync_tokens.contains(&kind) || kind == SyntaxKind::NEWLINE {
+                break;
+            }
+            // Skip the current token
+            let _ = self.bump();
+        }
+    }
+
+    // Add these helper methods
+    fn skip_until_sync_point(&mut self) {
+        while let Some(kind) = self.peek_kind() {
+            if self.is_sync_point(kind) {
+                // Found a sync point, consume it and break
+                self.bump().ok();
+                break;
+            }
+            // Skip the current token
+            self.bump().ok();
+        }
+    }
+
+    fn is_sync_point(&self, kind: SyntaxKind) -> bool {
+        matches!(kind, 
+            SyntaxKind::SEMICOLON |
+            SyntaxKind::NEWLINE |
+            SyntaxKind::R_BRACE |
+            // Statement start tokens
+            SyntaxKind::IMPORT_KW |
+            SyntaxKind::PUBLIC_KW |
+            SyntaxKind::FUNCTION_KW |
+            SyntaxKind::IF_KW |
+            SyntaxKind::WHILE_KW |
+            SyntaxKind::RETURN_KW
+        )
+    }
+
+    fn synchronize(&mut self) {
+        // Skip until we find a synchronization point
+        self.skip_until_sync_point();
+        
+        // Skip any additional newlines/semicolons to get to the next statement
+        while let Some(kind) = self.peek_kind() {
+            if matches!(kind, SyntaxKind::SEMICOLON | SyntaxKind::NEWLINE) {
+                self.bump().ok();
+            } else {
+                break;
+            }
+        }
     }
 } 

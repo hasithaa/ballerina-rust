@@ -57,7 +57,6 @@ fn build_single_file(path: &Path) -> Result<(), String> {
 }
 
 fn build_project_from_path(project_path: &Path) -> Result<(), String> {
-    // Load and validate project
     let project = Project::load(project_path)
         .map_err(|e| format!("Failed to load project: {}", e))?;
 
@@ -67,13 +66,23 @@ fn build_project_from_path(project_path: &Path) -> Result<(), String> {
         project.package.info.version);
     println!("Project directory: {}", project.root_dir.display());
 
-    // Build all source files
+    let mut project_had_errors = false;
+    
+    // Build all source files, continuing after errors
     for file in &project.source_files {
         println!("\nBuilding file: {}", file.display());
-        parse_and_build_file(file)?;
+        if let Err(e) = parse_and_build_file(file) {
+            eprintln!("Error in {}: {}", file.display(), e);
+            project_had_errors = true;
+            // Continue with next file
+        }
     }
 
-    Ok(())
+    if project_had_errors {
+        Err("Project build completed with errors".to_string())
+    } else {
+        Ok(())
+    }
 }
 
 fn parse_and_build_file(path: &Path) -> Result<(), String> {
@@ -83,31 +92,40 @@ fn parse_and_build_file(path: &Path) -> Result<(), String> {
     // Tokenize with error handling
     let mut tokens = Vec::new();
     let mut lexer = Lexer::new(&source);
-    let had_errors = false;
+    let mut had_errors = false;
     
     while let Some(result) = lexer.next_token() {
-        if let Ok(token_info) = result {
-            if !matches!(token_info.kind, bal_syntax::lexer::Token::Newline) {
-                let kind = convert_token(token_info.kind);
-                tokens.push((kind, token_info.text, token_info.span));
+        match result {
+            Ok(token_info) => {
+                if !matches!(token_info.kind, bal_syntax::lexer::Token::Newline) {
+                    let kind = convert_token(token_info.kind);
+                    tokens.push((kind, token_info.text, token_info.span));
+                }
+            }
+            Err(e) => {
+                eprintln!("Lexer error: {}", e);
+                had_errors = true;
+                // Continue lexing despite error
             }
         }
-    }
-
-    if had_errors {
-        return Err("Failed to tokenize input".to_string());
     }
 
     let file_name = path.to_str().map(String::from);
     let parser = Parser::new(file_name, tokens);
     match parser.parse() {
         Ok(parse_tree) => {
-            println!("Successfully parsed: {}", path.display());
             println!("Parse tree:\n{:#?}", parse_tree);
-            Ok(())
+            if had_errors {
+                Err("Completed with errors".to_string())
+            } else {
+                println!("Successfully parsed: {}", path.display());
+                Ok(())
+            }
         }
         Err(e) => {
-            Err(format!("Parser error: {}", e))
+            eprintln!("Parser error: {}", e);
+            // Continue with other files if in a project
+            Err("Parser errors encountered".to_string())
         }
     }
 }

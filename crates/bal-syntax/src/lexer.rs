@@ -162,8 +162,20 @@ impl<'a> Lexer<'a> {
         self.inner.next().map(|token| {
             let range = self.inner.span();
             let (line, column) = self.get_position(range.start);
-            Ok(TokenInfo {
-                kind: token.map_err(|_| LexerError::InvalidCharacter('\0', range.start))?,
+            
+            token.map_err(|_| {
+                // Get the line content for error reporting
+                let line_content = self.get_line_content(line);
+                
+                LexerError::InvalidCharacter {
+                    character: self.source[range.start..].chars().next().unwrap_or('\0'),
+                    position: range.start,
+                    line,
+                    column,
+                    line_content,
+                }
+            }).map(|token| TokenInfo {
+                kind: token,
                 text: self.source[range.clone()].to_string(),
                 span: Span {
                     file: None,
@@ -175,5 +187,18 @@ impl<'a> Lexer<'a> {
                 },
             })
         })
+    }
+
+    fn get_line_content(&self, line_number: usize) -> String {
+        let start = if line_number > 0 { 
+            self.line_starts[line_number - 1] 
+        } else { 
+            0 
+        };
+        let end = self.line_starts.get(line_number)
+            .copied()
+            .unwrap_or(self.source.len());
+        
+        self.source[start..end].trim_end().to_string()
     }
 } 

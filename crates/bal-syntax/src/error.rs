@@ -2,7 +2,13 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum LexerError {
-    InvalidCharacter(char, usize),
+    InvalidCharacter {
+        character: char,
+        position: usize,
+        line: usize,
+        column: usize,
+        line_content: String,
+    },
     UnterminatedString(usize),
     UnexpectedEof,
 }
@@ -34,10 +40,19 @@ pub struct Span {
 impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LexerError::InvalidCharacter(c, pos) => {
+            LexerError::InvalidCharacter { character, line, column, line_content, .. } => {
                 writeln!(f, "error: invalid character")?;
+                writeln!(f, " --> line {}:{}", line, column)?;
                 writeln!(f, "  |")?;
-                writeln!(f, "  | found invalid character '{}' at position {}", c, pos)
+                writeln!(f, "{} | {}", line, line_content)?;
+                writeln!(f, "  | {}^ unexpected character '{}'",
+                    " ".repeat(*column),
+                    if character.is_control() {
+                        format!("\\x{:02x}", *character as u8)
+                    } else {
+                        character.to_string()
+                    }
+                )
             }
             LexerError::UnterminatedString(pos) => {
                 writeln!(f, "error: unterminated string")?;

@@ -13,6 +13,7 @@ pub enum SyntaxKind {
     COMMENT,
     IDENTIFIER,
     INTEGER_LITERAL,
+    NEWLINE,
     
     // Keywords
     IMPORT_KW,
