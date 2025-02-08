@@ -122,7 +122,7 @@ mod tests {
             .find(|t| matches!(t.kind, Token::LineComment))
             .unwrap();
         assert_eq!(token.text, "// comment");
-        assert_eq!(token.span, 4..14);
+        assert_eq!((token.span.start, token.span.end), (4, 14));
     }
 
     #[test]
@@ -245,5 +245,20 @@ mod tests {
             Token::RBrace,
             Token::RBrace,
         ]);
+    }
+
+    #[test]
+    fn test_token_position() {
+        let input = "foo\nbar // comment\nbaz";
+        let tokens = tokenize(input);
+        
+        assert_eq!(tokens[0].span.line, 1);
+        assert_eq!(tokens[0].span.column, 0);
+        
+        assert_eq!(tokens[1].span.line, 2);
+        assert_eq!(tokens[1].span.column, 0);
+        
+        assert_eq!(tokens[2].span.line, 2);
+        assert_eq!(tokens[2].span.column, 4);
     }
 } 

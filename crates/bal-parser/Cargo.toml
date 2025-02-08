@@ -5,4 +5,7 @@ edition.workspace = true
 
 [dependencies]
 bal-syntax = { path = "../bal-syntax" }
-rowan.workspace = true 
+rowan.workspace = true
+
+[dev-dependencies]
+insta = "1.34.0" 
