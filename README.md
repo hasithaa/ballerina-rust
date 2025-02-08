@@ -2,7 +2,6 @@
 
 A compiler implementation for the Ballerina programming language in Rust.
 
-
 ## Building
 
 ```bash
@@ -13,7 +12,7 @@ cargo build
 cargo test
 
 # Run CLI
-cargo run -p bal-cli -- --input [input file] --output [output file]
+./target/debug/bal-cli build ballerina-src/m1/exp1.bal
 ```
 
 ## Development
@@ -27,6 +26,10 @@ This project is organized as a Rust workspace with multiple crates:
 - bal-parser: Parses the source code into an AST
 - bal-syntax: Defines the syntax and lexing rules
 - bal-wasm: WebAssembly bindings for the compiler
+
+## Ballerina Language Features:
+
+See [LanguageSupport.md](LanguageSupport.md)
 
 ## Features
 

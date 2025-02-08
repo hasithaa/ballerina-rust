@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "ballerina-rust")]
@@ -6,16 +6,32 @@ use clap::Parser;
 #[command(version = "0.1.0")]
 #[command(about = "Ballerina compiler implemented in Rust", long_about = None)]
 struct Cli {
-    #[arg(short, long)]
-    input: String,
-    
-    #[arg(short, long)]
-    output: Option<String>,
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Build a Ballerina file
+    Build {
+        /// Input .bal file
+        input: String,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
-    println!("Processing file: {}", cli.input);
+
+    let result = match cli.command {
+        Commands::Build { input } => {
+            commands::build(&input)
+        }
+    };
+
+    if let Err(e) = result {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
 }
 
 mod commands;
