@@ -1,8 +1,6 @@
 //! Ballerina Syntax Library
 //! Handles lexing, tokenization, and basic syntax structures
 
-use rowan::{GreenNode, GreenNodeBuilder, Language, SyntaxNode};
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BallerinaLanguage {}
 

@@ -123,7 +123,6 @@ pub enum Token {
     #[regex("0|[1-9][0-9]*")]
     IntegerLiteral,
 
-    // Comments
     #[regex(r"\n+")]
     Newline,
 

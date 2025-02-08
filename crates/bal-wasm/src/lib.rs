@@ -1,6 +1,4 @@
 use wasm_bindgen::prelude::*;
-use bal_parser::Parser;
-use bal_ast::SourceFile;
 
 #[wasm_bindgen]
 pub struct BallerinaCompiler {

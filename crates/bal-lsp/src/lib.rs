@@ -1,6 +1,5 @@
 //! Ballerina Language Server Protocol Implementation
 
-use tower_lsp::{LspService, Server};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};

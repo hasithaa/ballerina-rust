@@ -1,7 +1,7 @@
 //! Event sink for building syntax trees
 
 use crate::event::Event;
-use bal_syntax::{BallerinaLanguage, SyntaxKind};
+use bal_syntax::BallerinaLanguage;
 use rowan::{GreenNodeBuilder, Language};
 
 pub struct Sink {

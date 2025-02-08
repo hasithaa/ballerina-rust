@@ -6,10 +6,6 @@ use bal_parser::Parser;
 use bal_syntax::lexer::Lexer;
 use bal_syntax::SyntaxKind;
 
-pub fn compile(input: &str, output: Option<&str>) -> Result<(), String> {
-    // TODO: Implement compilation
-    Ok(())
-}
 
 pub fn build(input: &str) -> Result<(), String> {
     let path = Path::new(input);
@@ -26,7 +22,7 @@ pub fn build(input: &str) -> Result<(), String> {
     // Tokenize with error handling
     let mut tokens = Vec::new();
     let mut lexer = Lexer::new(&source);
-    let mut had_errors = false;
+    let had_errors = false;
     
     while let Some(result) = lexer.next_token() {
         if let Ok(token_info) = result {

@@ -52,7 +52,7 @@ impl Parser {
         
         // Optional public modifier
         if self.at(SyntaxKind::PUBLIC_KW) {
-            self.bump();
+            self.bump()?;
         }
         
         self.expect(SyntaxKind::FUNCTION_KW)?;
@@ -74,7 +74,7 @@ impl Parser {
         self.expect(SyntaxKind::R_PAREN)?;
         
         if self.at(SyntaxKind::RETURNS_KW) {
-            self.bump();
+            self.bump()?;
             self.parse_type_desc()?;
         }
         
@@ -139,15 +139,15 @@ impl Parser {
         pos
     }
 
-    fn skip_trivia(&mut self) {
-        while let Some(kind) = self.peek_kind() {
-            if matches!(kind, SyntaxKind::WHITESPACE | SyntaxKind::COMMENT) {
-                self.cursor += 1;
-            } else {
-                break;
-            }
-        }
-    }
+    // fn skip_trivia(&mut self) {
+    //     while let Some(kind) = self.peek_kind() {
+    //         if matches!(kind, SyntaxKind::WHITESPACE | SyntaxKind::COMMENT) {
+    //             self.cursor += 1;
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    // }
 
     fn at_end(&self) -> bool {
         self.peek_kind().is_none()
@@ -179,7 +179,7 @@ impl Parser {
 
     fn expect(&mut self, kind: SyntaxKind) -> Result<(), ParserError> {
         if self.at(kind) {
-            self.bump();
+            self.bump()?;
             Ok(())
         } else {
             Err(ParserError::UnexpectedToken {
@@ -193,7 +193,7 @@ impl Parser {
     fn expect_one_of(&mut self, kinds: &[SyntaxKind]) -> Result<(), ParserError> {
         if let Some(current) = self.peek_kind() {
             if kinds.contains(&current) {
-                self.bump();
+                self.bump()?;
                 Ok(())
             } else {
                 Err(ParserError::UnexpectedToken {

@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::lexer::{Lexer, Token, TokenInfo};
 
     fn tokenize(input: &str) -> Vec<TokenInfo> {
