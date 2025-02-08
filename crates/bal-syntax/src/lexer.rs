@@ -1,14 +1,8 @@
 //! Lexer implementation for Ballerina
 
 use logos::Logos;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Span {
-    pub start: usize,
-    pub end: usize,
-    pub line: usize,    // 1-based line number
-    pub column: usize,  // 0-based column
-}
+use crate::error::LexerError;
+use crate::error::Span;  // Use Span from error module
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TokenInfo {
@@ -18,7 +12,7 @@ pub struct TokenInfo {
 }
 
 #[derive(Logos, Debug, PartialEq, Clone)]
-#[logos(skip r"[ \t\n\f]+")]  // Ignore whitespace
+#[logos(skip r"[ \t\f]+")]  // Skip non-newline whitespace
 pub enum Token {
     // Keywords
     #[token("import")]
@@ -130,7 +124,10 @@ pub enum Token {
     IntegerLiteral,
 
     // Comments
-    #[regex("//[^\n]*")]
+    #[regex(r"\n+")]
+    Newline,
+
+    #[regex(r"//[^\n]*")]
     LineComment,
 }
 
@@ -162,20 +159,21 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> Option<TokenInfo> {
+    pub fn next_token(&mut self) -> Option<Result<TokenInfo, LexerError>> {
         self.inner.next().map(|token| {
             let range = self.inner.span();
             let (line, column) = self.get_position(range.start);
-            TokenInfo {
-                kind: token.unwrap(),
+            Ok(TokenInfo {
+                kind: token.map_err(|_| LexerError::InvalidCharacter('\0', range.start))?,
                 text: self.source[range.clone()].to_string(),
                 span: Span {
+                    file: None,
                     start: range.start,
                     end: range.end,
                     line,
                     column,
                 },
-            }
+            })
         })
     }
 } 

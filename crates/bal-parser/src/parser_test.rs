@@ -2,39 +2,44 @@
 mod tests {
     use crate::Parser;
     use bal_syntax::SyntaxKind;
+    use bal_syntax::error::Span;
 
     fn parse(input: &str) -> String {
         let tokens = tokenize(input);
-        let parser = Parser::new(tokens);
+        let parser = Parser::new(Some("test.bal".to_string()), tokens);
         let node = parser.parse();
         format!("{:#?}", node)
     }
 
-    fn tokenize(input: &str) -> Vec<(SyntaxKind, String)> {
+    fn tokenize(input: &str) -> Vec<(SyntaxKind, String, Span)> {
         use bal_syntax::lexer::{Lexer, Token};
         
         let mut lexer = Lexer::new(input);
         let mut tokens = Vec::new();
         
-        while let Some(token_info) = lexer.next_token() {
-            let kind = match token_info.kind {
-                Token::Import => SyntaxKind::IMPORT_KW,
-                Token::Public => SyntaxKind::PUBLIC_KW,
-                Token::Function => SyntaxKind::FUNCTION_KW,
-                Token::Returns => SyntaxKind::RETURNS_KW,
-                Token::Int => SyntaxKind::INT_KW,
-                Token::Boolean => SyntaxKind::BOOLEAN_KW,
-                Token::Identifier => SyntaxKind::IDENTIFIER,
-                Token::LParen => SyntaxKind::L_PAREN,
-                Token::RParen => SyntaxKind::R_PAREN,
-                Token::LBrace => SyntaxKind::L_BRACE,
-                Token::RBrace => SyntaxKind::R_BRACE,
-                Token::Comma => SyntaxKind::COMMA,
-                Token::Semicolon => SyntaxKind::SEMICOLON,
-                Token::Slash => SyntaxKind::SLASH,
-                _ => continue, // Skip other tokens for now
-            };
-            tokens.push((kind, token_info.text));
+        while let Some(result) = lexer.next_token() {
+            if let Ok(token_info) = result {
+                // Skip whitespace and newlines
+                match token_info.kind {
+                    Token::Import => tokens.push((SyntaxKind::IMPORT_KW, token_info.text, token_info.span)),
+                    Token::Public => tokens.push((SyntaxKind::PUBLIC_KW, token_info.text, token_info.span)),
+                    Token::Function => tokens.push((SyntaxKind::FUNCTION_KW, token_info.text, token_info.span)),
+                    Token::Returns => tokens.push((SyntaxKind::RETURNS_KW, token_info.text, token_info.span)),
+                    Token::Int => tokens.push((SyntaxKind::INT_KW, token_info.text, token_info.span)),
+                    Token::Boolean => tokens.push((SyntaxKind::BOOLEAN_KW, token_info.text, token_info.span)),
+                    Token::Identifier => tokens.push((SyntaxKind::IDENTIFIER, token_info.text, token_info.span)),
+                    Token::LParen => tokens.push((SyntaxKind::L_PAREN, token_info.text, token_info.span)),
+                    Token::RParen => tokens.push((SyntaxKind::R_PAREN, token_info.text, token_info.span)),
+                    Token::LBrace => tokens.push((SyntaxKind::L_BRACE, token_info.text, token_info.span)),
+                    Token::RBrace => tokens.push((SyntaxKind::R_BRACE, token_info.text, token_info.span)),
+                    Token::Comma => tokens.push((SyntaxKind::COMMA, token_info.text, token_info.span)),
+                    Token::Semicolon => tokens.push((SyntaxKind::SEMICOLON, token_info.text, token_info.span)),
+                    Token::Slash => tokens.push((SyntaxKind::SLASH, token_info.text, token_info.span)),
+                    Token::LineComment => tokens.push((SyntaxKind::COMMENT, token_info.text, token_info.span)),
+                    Token::Newline => continue, // Skip newlines
+                    _ => continue, // Skip other tokens
+                }
+            }
         }
         tokens
     }
@@ -72,7 +77,7 @@ mod tests {
     #[test]
     fn test_complete_module() {
         let input = r#"
-            import math/basic;
+            import ballerina/io;
             
             public function add(int a, int b) returns int {
             }

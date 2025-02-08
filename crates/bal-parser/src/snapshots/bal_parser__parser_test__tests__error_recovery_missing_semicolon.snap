@@ -1,12 +1,20 @@
 ---
 source: crates/bal-parser/src/parser_test.rs
-assertion_line: 89
+assertion_line: 94
 expression: parse(input)
 ---
-GreenNode {
-    kind: SyntaxKind(
-        38,
-    ),
-    text_len: 13,
-    n_children: 1,
-}
+Err(
+    MissingToken {
+        expected: "semicolon",
+        after: "import statement",
+        span: Span {
+            file: Some(
+                "test.bal",
+            ),
+            start: 4,
+            end: 4,
+            line: 1,
+            column: 12,
+        },
+    },
+)

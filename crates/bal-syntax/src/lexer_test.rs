@@ -6,8 +6,13 @@ mod tests {
     fn tokenize(input: &str) -> Vec<TokenInfo> {
         let mut lexer = Lexer::new(input);
         let mut tokens = Vec::new();
-        while let Some(token) = lexer.next_token() {
-            tokens.push(token);
+        while let Some(result) = lexer.next_token() {
+            if let Ok(token) = result {
+                // Skip newlines
+                if !matches!(token.kind, Token::Newline) {
+                    tokens.push(token);
+                }
+            }
         }
         tokens
     }

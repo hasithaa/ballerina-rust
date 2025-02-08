@@ -1,12 +1,23 @@
 ---
 source: crates/bal-parser/src/parser_test.rs
-assertion_line: 95
+assertion_line: 100
 expression: parse(input)
 ---
-GreenNode {
-    kind: SyntaxKind(
-        38,
-    ),
-    text_len: 21,
-    n_children: 1,
-}
+Err(
+    UnexpectedToken {
+        expected: [
+            "INT_KW",
+            "BOOLEAN_KW",
+        ],
+        found: "IDENTIFIER",
+        span: Span {
+            file: Some(
+                "test.bal",
+            ),
+            start: 13,
+            end: 14,
+            line: 1,
+            column: 13,
+        },
+    },
+)

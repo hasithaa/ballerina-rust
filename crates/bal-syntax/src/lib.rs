@@ -104,6 +104,7 @@ impl TryFrom<u16> for SyntaxKind {
 
 pub mod lexer;
 pub mod token;
+pub mod error;
 
 #[cfg(test)]
 mod lexer_test; 
