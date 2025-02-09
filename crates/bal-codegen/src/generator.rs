@@ -13,4 +13,4 @@ impl Generator {
         // TODO: Implement code generation
         String::new()
     }
-} 
+}

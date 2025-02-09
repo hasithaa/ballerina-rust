@@ -7,4 +7,4 @@ pub struct ValidationError {
 
 pub fn validate_ast(ast: &crate::SourceFile) -> Vec<ValidationError> {
     Vec::new() // TODO: Implement validation rules
-} 
+}

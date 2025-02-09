@@ -2,7 +2,12 @@
 
 #[derive(Debug)]
 pub enum Event {
-    StartNode { kind: crate::SyntaxKind },
-    AddToken { kind: crate::SyntaxKind, text: String },
+    StartNode {
+        kind: crate::SyntaxKind,
+    },
+    AddToken {
+        kind: crate::SyntaxKind,
+        text: String,
+    },
     FinishNode,
-} 
+}

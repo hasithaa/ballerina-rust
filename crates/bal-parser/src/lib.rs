@@ -1,9 +1,9 @@
 //! Ballerina Parser Library
 //! Handles incremental parsing and syntax tree construction
 
+use bal_syntax::error::{ParserError, Span};
 use bal_syntax::SyntaxKind;
 use rowan::{GreenNode, GreenNodeBuilder};
-use bal_syntax::error::{ParserError, Span};
 
 pub type Result<T> = std::result::Result<T, ParserError>;
 
@@ -35,4 +35,4 @@ pub mod grammar;
 pub mod sink;
 
 #[cfg(test)]
-mod parser_test; 
+mod parser_test;

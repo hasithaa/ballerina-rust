@@ -1,14 +1,13 @@
 //! CLI command implementations
 
-use std::fs;
-use std::path::{Path, PathBuf};
+use crate::config::Config;
+use crate::dependency::{build_project_dependencies, DependencyGraph, ModuleId};
 use bal_parser::Parser;
 use bal_syntax::lexer::Lexer;
 use bal_syntax::project::Project;
-use crate::dependency::{build_project_dependencies, DependencyGraph, ModuleId};
-use crate::config::Config;
 use std::collections::{HashMap, HashSet};
-
+use std::fs;
+use std::path::{Path, PathBuf};
 
 fn is_bal_file(path: &Path) -> bool {
     path.extension()
@@ -29,7 +28,7 @@ pub fn build(input: Option<PathBuf>, config: &Config) -> Result<(), String> {
             &std::env::current_dir()
                 .map_err(|e| format!("Failed to get current directory: {}", e))?,
             config,
-        )
+        ),
     }
 }
 
@@ -63,27 +62,35 @@ fn build_single_file(path: &Path, config: &Config) -> Result<(), String> {
 }
 
 fn build_project_from_path(project_path: &Path, config: &Config) -> Result<(), String> {
-    let project = Project::load(project_path)
-        .map_err(|e| format!("Failed to load project: {}", e))?;
+    let project =
+        Project::load(project_path).map_err(|e| format!("Failed to load project: {}", e))?;
 
-    println!("Building Ballerina project: {}/{} v{}", 
-        project.package.info.org,
-        project.package.info.name, 
-        project.package.info.version);
+    println!(
+        "Building Ballerina project: {}/{} v{}",
+        project.package.info.org, project.package.info.name, project.package.info.version
+    );
 
-    config.debug(&format!("Project directory: {}", project.root_dir.display()));
+    config.debug(&format!(
+        "Project directory: {}",
+        project.root_dir.display()
+    ));
 
     let (mut dep_graph, from_cache) = build_project_dependencies(&project, config)
         .map_err(|e| format!("Failed to build dependency graph: {}", e))?;
 
-    config.debug(&format!("Dependency graph {} from cache", 
-        if from_cache { "loaded" } else { "built" }));
+    config.debug(&format!(
+        "Dependency graph {} from cache",
+        if from_cache { "loaded" } else { "built" }
+    ));
 
     // Get all the data we need before mutable operations
-    let build_tasks: Vec<_> = dep_graph.build_order()
+    let build_tasks: Vec<_> = dep_graph
+        .build_order()
         .into_iter()
         .filter_map(|id| {
-            dep_graph.module_files.get(&id)
+            dep_graph
+                .module_files
+                .get(&id)
                 .map(|path| (id, path.clone()))
         })
         .collect();
@@ -122,9 +129,12 @@ fn print_dependency_tree(deps: &HashMap<ModuleId, HashSet<ModuleId>>) {
     }
 }
 
-fn parse_and_build_file(path: &Path, config: &Config, dep_graph: &mut DependencyGraph) -> Result<(), String> {
-    let source = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
+fn parse_and_build_file(
+    path: &Path,
+    config: &Config,
+    dep_graph: &mut DependencyGraph,
+) -> Result<(), String> {
+    let source = fs::read_to_string(path).map_err(|e| format!("Failed to read file: {}", e))?;
 
     // Check if we have a valid cached parse tree
     if let Some(parse_tree) = dep_graph.get_cached_parse(path, &source) {
@@ -135,12 +145,12 @@ fn parse_and_build_file(path: &Path, config: &Config, dep_graph: &mut Dependency
 
     // If no cache hit, parse the file
     config.debug(&format!("Parsing file {}", path.display()));
-    
+
     // Tokenize with error handling
     let mut tokens = Vec::new();
     let mut lexer = Lexer::new(&source);
     let mut had_errors = false;
-    
+
     while let Some(result) = lexer.next_token() {
         match result {
             Ok(token_info) => {
@@ -161,10 +171,10 @@ fn parse_and_build_file(path: &Path, config: &Config, dep_graph: &mut Dependency
     match parser.parse() {
         Ok(parse_tree) => {
             config.debug(&format!("Parse tree:\n{:#?}", parse_tree));
-            
+
             // Cache successful parse
             dep_graph.cache_parse(path.to_path_buf(), &source, parse_tree);
-            
+
             if had_errors {
                 Err("Completed with errors".to_string())
             } else {
@@ -203,7 +213,10 @@ pub fn clean(path: Option<PathBuf>, config: &Config) -> Result<(), String> {
     // Delete target directory
     let target_dir = project_path.join("target");
     if target_dir.exists() {
-        config.debug(&format!("Removing target directory: {}", target_dir.display()));
+        config.debug(&format!(
+            "Removing target directory: {}",
+            target_dir.display()
+        ));
         std::fs::remove_dir_all(&target_dir)
             .map_err(|e| format!("Failed to remove target directory: {}", e))?;
         println!("Cleaned target directory");
@@ -215,4 +228,4 @@ pub fn clean(path: Option<PathBuf>, config: &Config) -> Result<(), String> {
 }
 
 #[cfg(test)]
-mod tests; 
+mod tests;

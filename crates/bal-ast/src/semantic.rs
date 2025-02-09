@@ -15,4 +15,4 @@ impl SemanticAnalyzer {
         // Implement semantic analysis
         Ok(())
     }
-} 
+}

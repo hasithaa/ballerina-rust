@@ -15,4 +15,4 @@ impl Config {
             eprintln!("DEBUG: {}", msg);
         }
     }
-} 
+}

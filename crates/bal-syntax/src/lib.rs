@@ -14,7 +14,7 @@ pub enum SyntaxKind {
     IDENTIFIER,
     INTEGER_LITERAL,
     NEWLINE,
-    
+
     // Keywords
     IMPORT_KW,
     PUBLIC_KW,
@@ -30,30 +30,30 @@ pub enum SyntaxKind {
     RETURN_KW,
     TRUE_KW,
     FALSE_KW,
-    
+
     // Operators
-    EQ,         // ==
-    NOT_EQ,     // !=
-    LT,         // <
-    LT_EQ,      // <=
-    GT,         // >
-    GT_EQ,      // >=
-    PLUS,       // +
-    MINUS,      // -
-    STAR,       // *
-    SLASH,      // /
-    PERCENT,    // %
-    ASSIGN,     // =
-    
+    EQ,      // ==
+    NOT_EQ,  // !=
+    LT,      // <
+    LT_EQ,   // <=
+    GT,      // >
+    GT_EQ,   // >=
+    PLUS,    // +
+    MINUS,   // -
+    STAR,    // *
+    SLASH,   // /
+    PERCENT, // %
+    ASSIGN,  // =
+
     // Delimiters
-    L_PAREN,    // (
-    R_PAREN,    // )
-    L_BRACE,    // {
-    R_BRACE,    // }
-    COMMA,      // ,
-    COLON,      // :
-    SEMICOLON,  // ;
-    
+    L_PAREN,   // (
+    R_PAREN,   // )
+    L_BRACE,   // {
+    R_BRACE,   // }
+    COMMA,     // ,
+    COLON,     // :
+    SEMICOLON, // ;
+
     // Composite nodes
     SOURCE_FILE,
     MODULE_PART,
@@ -84,7 +84,7 @@ pub enum SyntaxKind {
     FUNCTION_CALL_EXPR,
     ARG_LIST,
     QUALIFIED_IDENTIFIER,
-    
+
     // Special tokens
     ERROR,
     EOF,
@@ -101,10 +101,10 @@ impl TryFrom<u16> for SyntaxKind {
     }
 }
 
-pub mod lexer;
-pub mod token;
 pub mod error;
+pub mod lexer;
 pub mod project;
+pub mod token;
 
 #[cfg(test)]
 mod lexer_test;

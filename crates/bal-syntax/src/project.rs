@@ -1,6 +1,6 @@
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct Package {
@@ -57,14 +57,16 @@ impl Project {
         // Read and parse Ballerina.toml
         let toml_path = find_ballerina_toml(&root_dir)
             .ok_or_else(|| ProjectError::Invalid("No Ballerina.toml found".to_string()))?;
-        
+
         let toml_content = fs::read_to_string(&toml_path)?;
         let package: Package = toml::from_str(&toml_content)?;
 
         // Find all .bal files
         let source_files = find_bal_files(&root_dir);
         if source_files.is_empty() {
-            return Err(ProjectError::Invalid("No .bal files found in project".to_string()));
+            return Err(ProjectError::Invalid(
+                "No .bal files found in project".to_string(),
+            ));
         }
 
         Ok(Project {
@@ -75,7 +77,7 @@ impl Project {
     }
 
     pub fn is_valid_source_file(&self, path: &Path) -> bool {
-        path.extension().and_then(|ext| ext.to_str()) == Some("bal") 
+        path.extension().and_then(|ext| ext.to_str()) == Some("bal")
             && path.parent() == Some(&self.root_dir)
     }
 }
@@ -102,4 +104,4 @@ fn find_bal_files(dir: &Path) -> Vec<PathBuf> {
         .map(|entry| entry.path())
         .filter(|path| path.extension().and_then(|ext| ext.to_str()) == Some("bal"))
         .collect()
-} 
+}

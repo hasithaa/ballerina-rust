@@ -19,4 +19,4 @@ impl BallerinaCompiler {
     }
 }
 
-pub mod bindings; 
+pub mod bindings;

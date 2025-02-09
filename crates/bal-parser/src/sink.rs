@@ -17,9 +17,13 @@ impl Sink {
 
     pub fn process(&mut self, event: Event) {
         match event {
-            Event::StartNode { kind } => self.builder.start_node(BallerinaLanguage::kind_to_raw(kind)),
-            Event::AddToken { kind, text } => self.builder.token(BallerinaLanguage::kind_to_raw(kind), text.as_str()),
+            Event::StartNode { kind } => self
+                .builder
+                .start_node(BallerinaLanguage::kind_to_raw(kind)),
+            Event::AddToken { kind, text } => self
+                .builder
+                .token(BallerinaLanguage::kind_to_raw(kind), text.as_str()),
             Event::FinishNode => self.builder.finish_node(),
         }
     }
-} 
+}

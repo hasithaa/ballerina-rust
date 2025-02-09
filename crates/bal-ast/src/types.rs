@@ -8,4 +8,4 @@ pub enum Type {
     Boolean,
     NIL,
     // Add more types as needed
-} 
+}

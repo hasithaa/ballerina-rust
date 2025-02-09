@@ -1,9 +1,10 @@
+use crate::config::Config;
+use bal_syntax::lexer::Lexer;
+use bal_syntax::project::Project;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use serde::{Serialize, Deserialize};
-use bal_syntax::project::Project;
-use crate::config::Config;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DependencyGraph {
@@ -14,7 +15,7 @@ pub struct DependencyGraph {
     /// Map from module ID to file path
     pub module_files: HashMap<ModuleId, PathBuf>,
     /// Map from file path to cached parse results and source hash
-    #[serde(skip)]  // Don't serialize parse results
+    #[serde(skip)] // Don't serialize parse results
     parse_cache: HashMap<PathBuf, (rowan::GreenNode, u64)>,
 }
 
@@ -39,7 +40,7 @@ impl DependencyGraph {
     /// Load cached dependency graph if it exists and is up to date
     pub fn load_cached(project: &Project) -> Option<Self> {
         let cache_path = project.root_dir.join("target").join("deps.cache");
-        
+
         // Try to read cached data
         if let Ok(cached_data) = std::fs::read(&cache_path) {
             if let Ok(graph) = bincode::deserialize::<DependencyGraph>(&cached_data) {
@@ -56,7 +57,7 @@ impl DependencyGraph {
     pub fn save_cache(&self, project: &Project) -> std::io::Result<()> {
         let cache_dir = project.root_dir.join("target");
         std::fs::create_dir_all(&cache_dir)?;
-        
+
         let cache_path = cache_dir.join("deps.cache");
         let data = bincode::serialize(self).unwrap();
         std::fs::write(cache_path, data)
@@ -78,10 +79,15 @@ impl DependencyGraph {
     }
 
     /// Add a module and its dependencies to the graph
-    pub fn add_module(&mut self, module: ModuleId, dependencies: HashSet<ModuleId>, file_path: PathBuf) {
+    pub fn add_module(
+        &mut self,
+        module: ModuleId,
+        dependencies: HashSet<ModuleId>,
+        file_path: PathBuf,
+    ) {
         self.dependencies.insert(module.clone(), dependencies);
         self.module_files.insert(module, file_path.clone());
-        
+
         // Update timestamp
         if let Ok(metadata) = std::fs::metadata(&file_path) {
             if let Ok(modified) = metadata.modified() {
@@ -110,7 +116,7 @@ impl DependencyGraph {
         module: &ModuleId,
         visited: &mut HashSet<ModuleId>,
         temp: &mut HashSet<ModuleId>,
-        result: &mut Vec<ModuleId>
+        result: &mut Vec<ModuleId>,
     ) {
         if temp.contains(module) {
             panic!("Circular dependency detected");
@@ -135,7 +141,8 @@ impl DependencyGraph {
     /// Get cached parse result if source hasn't changed
     pub fn get_cached_parse(&self, path: &Path, source: &str) -> Option<&rowan::GreenNode> {
         let current_hash = calculate_hash(source);
-        self.parse_cache.get(path)
+        self.parse_cache
+            .get(path)
             .filter(|(_, hash)| *hash == current_hash)
             .map(|(tree, _)| tree)
     }
@@ -166,17 +173,18 @@ pub fn build_project_dependencies(
 
     config.debug("Building new dependency graph");
     let mut graph = DependencyGraph::new();
-    
+
     // Parse all files to build dependency graph
     for file_path in &project.source_files {
         let source = std::fs::read_to_string(file_path)?;
         let imports = parse_imports(&source)?;
-        
+
         let module_id = module_id_from_path(project, file_path);
-        let dependencies = imports.into_iter()
+        let dependencies = imports
+            .into_iter()
             .map(|imp| ModuleId::from_import(&imp))
             .collect();
-            
+
         graph.add_module(module_id, dependencies, file_path.to_path_buf());
     }
 
@@ -187,14 +195,56 @@ pub fn build_project_dependencies(
 
 /// Parse import statements from source code
 fn parse_imports(source: &str) -> std::io::Result<Vec<String>> {
-    // TODO: Use actual parser to extract imports
-    // For now, just a simple example implementation
-    let mut imports = Vec::new();
-    for line in source.lines() {
-        if line.trim().starts_with("import ") {
-            imports.push(line.trim()[7..].trim_end_matches(';').to_string());
+    let mut lexer = Lexer::new(source);
+    let mut tokens = Vec::new();
+
+    // First tokenize the source
+    while let Some(Ok(token_info)) = lexer.next_token() {
+        if !matches!(token_info.kind, bal_syntax::lexer::Token::Newline) {
+            tokens.push((
+                bal_syntax::convert_token(token_info.kind),
+                token_info.text,
+                token_info.span,
+            ));
         }
     }
+
+    let mut imports = Vec::new();
+    let mut i = 0;
+
+    // Parse imports using proper token analysis
+    while i < tokens.len() {
+        if matches!(tokens[i].0, bal_syntax::SyntaxKind::IMPORT_KW) {
+            let mut import_path = Vec::new();
+            i += 1; // Skip 'import' keyword
+
+            // Collect all identifiers and slashes until semicolon
+            while i < tokens.len() {
+                match tokens[i].0 {
+                    bal_syntax::SyntaxKind::IDENTIFIER => {
+                        import_path.push(tokens[i].1.clone());
+                        i += 1;
+                    }
+                    bal_syntax::SyntaxKind::SLASH => {
+                        import_path.push("/".to_string());
+                        i += 1;
+                    }
+                    bal_syntax::SyntaxKind::SEMICOLON => {
+                        i += 1;
+                        break;
+                    }
+                    _ => i += 1,
+                }
+            }
+
+            if !import_path.is_empty() {
+                imports.push(import_path.join(""));
+            }
+        } else {
+            i += 1;
+        }
+    }
+
     Ok(imports)
 }
 
@@ -227,4 +277,4 @@ fn calculate_hash(source: &str) -> u64 {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     source.hash(&mut hasher);
     hasher.finish()
-} 
+}

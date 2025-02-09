@@ -20,4 +20,4 @@ impl CodeGenerator {
 
 pub mod generator;
 pub mod printer;
-pub mod sourcemap; 
+pub mod sourcemap;

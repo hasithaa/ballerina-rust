@@ -17,4 +17,4 @@ impl Language for BallerinaLanguage {
 pub struct Token {
     pub kind: SyntaxKind,
     pub text: &'static str,
-} 
+}

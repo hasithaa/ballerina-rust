@@ -3,4 +3,4 @@
 // Basic structure to be implemented
 pub struct SourceMap {
     // TODO: Implement source mapping functionality
-} 
+}
